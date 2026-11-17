@@ -160,11 +160,18 @@ ${musicHtml}
 
 </div>
 <template id="rsvp-template">${rsvpHtml}</template>
+<script src="/js/config.js"></script>
 <script src="/js/app.js" defer></script>
 </body>
 </html>
 `;
 
-fs.writeFileSync(path.join(ROOT, 'index.html'), page, 'utf8');
+function relativize(html) {
+  return html
+    .replace(/((?:href|src|content)=")\/(?!\/)/g, '$1')
+    .replace(/url\((['"]?)\/(?!\/)/g, 'url($1');
+}
+
+fs.writeFileSync(path.join(ROOT, 'index.html'), relativize(page), 'utf8');
 console.log('index.html written', page.length);
 console.log('envelope', envelopeHtml.length, 'invitation', invitationHtml.length, 'music', musicHtml.length);

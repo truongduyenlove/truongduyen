@@ -20,6 +20,76 @@
   };
 
   /* ---------------------------------------------------------
+     Google Apps Script bridge (guestbook + RSVP)
+     --------------------------------------------------------- */
+  var APP_SCRIPT_URL = String((window.WEDDING_CONFIG || {}).appScriptUrl || '').trim();
+  var WISH_CACHE_KEY = 'td-wishes-v1';
+
+  function postToAppScript(payload) {
+    var body = new URLSearchParams();
+    Object.keys(payload).forEach(function (key) {
+      if (payload[key] !== undefined && payload[key] !== null) body.append(key, payload[key]);
+    });
+    return fetch(APP_SCRIPT_URL, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: body.toString()
+    });
+  }
+
+  function readWishCache() {
+    try { return JSON.parse(localStorage.getItem(WISH_CACHE_KEY) || '[]'); } catch (e) { return []; }
+  }
+
+  function writeWishCache(list) {
+    try { localStorage.setItem(WISH_CACHE_KEY, JSON.stringify((list || []).slice(0, 100))); } catch (e) {}
+  }
+
+  function loadAppScriptWishes() {
+    return new Promise(function (resolve, reject) {
+      if (!APP_SCRIPT_URL) { reject(new Error('no endpoint')); return; }
+      var callback = 'tdWishes' + Date.now() + Math.floor(Math.random() * 1000);
+      var script = document.createElement('script');
+      var done = false;
+      var timer = setTimeout(function () { finish(); reject(new Error('timeout')); }, 8000);
+      function finish() {
+        if (done) return;
+        done = true;
+        clearTimeout(timer);
+        script.remove();
+        try { delete window[callback]; } catch (e) { window[callback] = undefined; }
+      }
+      window[callback] = function (payload) {
+        var list = (payload && payload.wishes) || [];
+        finish();
+        resolve(list.map(function (wish) {
+          var time = Number(wish.time) || Date.now();
+          return { name: wish.name, message: wish.wish, createdAt: new Date(time).toISOString() };
+        }));
+      };
+      script.onerror = function () { finish(); reject(new Error('network')); };
+      script.src = APP_SCRIPT_URL + (APP_SCRIPT_URL.indexOf('?') === -1 ? '?' : '&') + 'action=wishes&callback=' + callback;
+      document.body.appendChild(script);
+    });
+  }
+
+  function mergeWishes(remote, local) {
+    var seen = {};
+    var merged = [];
+    (remote || []).concat(local || []).forEach(function (item) {
+      if (!item || !item.name || !item.message) return;
+      var key = item.name + '|' + item.message;
+      if (seen[key]) return;
+      seen[key] = 1;
+      merged.push(item);
+    });
+    return merged.sort(function (a, b) {
+      return new Date(b.createdAt || 0) - new Date(a.createdAt || 0);
+    }).slice(0, 100);
+  }
+
+  /* ---------------------------------------------------------
      Toast
      --------------------------------------------------------- */
   var toastHost;
@@ -451,8 +521,17 @@
     var submit = $('button[type="submit"]', overlay);
     var labels = radios.map(function (r) { return r.closest('label'); });
 
+    var countWrap = document.createElement('div');
+    countWrap.style.display = 'none';
+    countWrap.innerHTML = '<label class="block text-sm font-medium text-gray-700 mb-1.5"><span dir="auto">Số người tham dự</span></label>'
+      + '<input type="number" min="1" max="20" value="1" inputmode="numeric" placeholder="Số người tham dự" class="w-full px-4 py-3 border border-gray-200 rounded-xl text-base sm:text-sm focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent transition-shadow placeholder:text-gray-400 bg-white text-gray-900">';
+    var countInput = countWrap.querySelector('input');
+    nameInput.closest('div').after(countWrap);
+
     function refresh() {
       var picked = radios.some(function (r) { return r.checked; });
+      var attendingYes = (radios.find(function (r) { return r.checked; }) || {}).value === 'yes';
+      countWrap.style.display = attendingYes ? '' : 'none';
       submit.disabled = !picked || !nameInput.value.trim();
       labels.forEach(function (label, i) {
         var radio = radios[i];
@@ -476,31 +555,40 @@
     nameInput.addEventListener('input', refresh);
     refresh();
 
+    function showRsvpSuccess(attending) {
+      var box = overlay.querySelector('.px-6.pb-6');
+      if (!box) return;
+      box.innerHTML = '<div style="text-align:center;padding:8px 0 12px">'
+        + '<div style="width:56px;height:56px;border-radius:999px;background:rgba(128,0,0,.08);display:flex;align-items:center;justify-content:center;margin:0 auto 14px">'
+        + '<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#800000" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></div>'
+        + '<h2 style="font-size:18px;font-weight:600;color:#111;margin:0 0 6px">Cảm ơn bạn!</h2>'
+        + '<p style="font-size:14px;color:#6b7280;margin:0">' + (attending === 'yes' ? 'Hẹn gặp bạn trong ngày vui của chúng tôi.' : 'Cảm ơn bạn đã hồi đáp.') + '</p>'
+        + '</div>';
+    }
+
     if (form) {
       form.addEventListener('submit', function (e) {
         e.preventDefault();
         var attending = (radios.find(function (r) { return r.checked; }) || {}).value;
-        var payload = { name: nameInput.value.trim(), attending: attending };
+        var count = attending === 'yes' ? Math.min(20, Math.max(1, parseInt(countInput.value, 10) || 1)) : 0;
+        var name = nameInput.value.trim();
         submit.disabled = true;
         var prevLabel = submit.textContent;
         submit.textContent = 'Đang gửi...';
-        fetch('/api/rsvp', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
-        }).then(function (r) {
-          if (!r.ok) throw new Error('http ' + r.status);
-          return r.json();
-        }).then(function () {
-          var box = overlay.querySelector('.px-6.pb-6');
-          if (box) {
-            box.innerHTML = '<div style="text-align:center;padding:8px 0 12px">'
-              + '<div style="width:56px;height:56px;border-radius:999px;background:rgba(128,0,0,.08);display:flex;align-items:center;justify-content:center;margin:0 auto 14px">'
-              + '<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#800000" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></div>'
-              + '<h2 style="font-size:18px;font-weight:600;color:#111;margin:0 0 6px">Cảm ơn bạn!</h2>'
-              + '<p style="font-size:14px;color:#6b7280;margin:0">' + (attending === 'yes' ? 'Hẹn gặp bạn trong ngày vui của chúng tôi.' : 'Cảm ơn bạn đã hồi đáp.') + '</p>'
-              + '</div>';
-          }
+
+        var request = APP_SCRIPT_URL
+          ? postToAppScript({ action: 'rsvp', name: name, attend: attending, count: count })
+          : fetch('/api/rsvp', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name: name, attending: attending, count: count })
+          }).then(function (r) {
+            if (!r.ok) throw new Error('http ' + r.status);
+            return r.json();
+          });
+
+        request.then(function () {
+          showRsvpSuccess(attending);
         }).catch(function () {
           submit.disabled = false;
           submit.textContent = prevLabel;
@@ -559,11 +647,24 @@
 
   function loadComments() {
     if (!gbList) return;
-    fetch('/api/comments').then(function (r) { return r.json(); }).then(function (data) {
-      renderComments((data && data.comments) || []);
-    }).catch(function () { renderComments([]); });
+    if (!APP_SCRIPT_URL) {
+      fetch('/api/comments').then(function (r) { return r.json(); }).then(function (data) {
+        renderComments((data && data.comments) || []);
+      }).catch(function () { renderComments([]); });
+      return;
+    }
+    var cached = readWishCache();
+    if (cached.length) renderComments(cached);
+    loadAppScriptWishes().then(function (remote) {
+      var merged = mergeWishes(remote, cached);
+      writeWishCache(merged);
+      renderComments(merged);
+    }).catch(function () {
+      if (!cached.length) renderComments([]);
+    });
   }
   loadComments();
+  if (APP_SCRIPT_URL) setInterval(loadComments, 45000);
 
   if (gbForm) {
     var gbName = $('input[placeholder="Nhập tên*"]', gbForm);
@@ -589,6 +690,24 @@
       var message = gbMessage.value.trim();
       if (!name || !message) { toast('Vui lòng nhập tên và lời chúc', 'error'); return; }
       gbSubmit.disabled = true;
+
+      if (APP_SCRIPT_URL) {
+        var entry = { name: name, message: message, createdAt: new Date().toISOString() };
+        writeWishCache(mergeWishes([entry], readWishCache()));
+        renderComments(readWishCache());
+        gbName.value = '';
+        gbMessage.value = '';
+        postToAppScript({ action: 'wish', name: name, wish: message }).then(function () {
+          toast('Đã gửi lời chúc, cảm ơn bạn!');
+          setTimeout(loadComments, 1500);
+        }).catch(function () {
+          toast('Đã lưu trên thiết bị này, sẽ đồng bộ khi có mạng.', 'error');
+        }).finally(function () {
+          gbSubmit.disabled = false;
+        });
+        return;
+      }
+
       fetch('/api/comments', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

@@ -87,9 +87,10 @@ const server = http.createServer(async (req, res) => {
       const body = await readBody(req);
       const name = String(body.name || '').trim().slice(0, 200);
       const attending = body.attending === 'yes' ? 'yes' : 'no';
+      const count = attending === 'yes' ? Math.min(20, Math.max(1, parseInt(body.count, 10) || 1)) : 0;
       if (!name) return sendJson(res, 400, { error: 'missing_name' });
       const data = await readJson(RSVPS);
-      const entry = { id: 'r_' + Date.now().toString(36), name, attending, createdAt: new Date().toISOString() };
+      const entry = { id: 'r_' + Date.now().toString(36), name, attending, count, createdAt: new Date().toISOString() };
       data.rsvps = [entry, ...(data.rsvps || [])];
       await writeJson(RSVPS, data);
       return sendJson(res, 201, { rsvp: entry });
@@ -107,6 +108,56 @@ const server = http.createServer(async (req, res) => {
       }
     }
     if (pathname === '/api/geo') return sendJson(res, 200, { country: 'VN' });
+
+    if (pathname === '/mock-apps-script') {
+      const action = url.searchParams.get('action');
+      if (req.method === 'GET' && action === 'wishes') {
+        const data = await readJson(COMMENTS);
+        const wishes = (data.comments || []).slice(0, 30).map((c) => ({
+          time: new Date(c.createdAt).getTime(),
+          name: c.name,
+          wish: c.message,
+        }));
+        const callback = url.searchParams.get('callback') || '';
+        const payload = JSON.stringify({ ok: true, wishes });
+        if (/^[A-Za-z_$][0-9A-Za-z_$]*$/.test(callback)) {
+          res.writeHead(200, { 'content-type': 'text/javascript; charset=utf-8', 'cache-control': 'no-store' });
+          return res.end(callback + '(' + payload + ');');
+        }
+        return sendJson(res, 200, { ok: true, wishes });
+      }
+      if (req.method === 'POST') {
+        const raw = await new Promise((resolve) => {
+          let body = '';
+          req.on('data', (c) => { body += c; });
+          req.on('end', () => resolve(body));
+        });
+        const form = new URLSearchParams(raw);
+        const action = form.get('action');
+        if (action === 'wish') {
+          const data = await readJson(COMMENTS);
+          data.comments = [{
+            id: 'c_' + Date.now().toString(36),
+            name: String(form.get('name') || '').slice(0, 200),
+            message: String(form.get('wish') || '').slice(0, 5000),
+            createdAt: new Date().toISOString(),
+          }, ...(data.comments || [])];
+          await writeJson(COMMENTS, data);
+        } else {
+          const data = await readJson(RSVPS);
+          data.rsvps = [{
+            id: 'r_' + Date.now().toString(36),
+            name: String(form.get('name') || '').slice(0, 200),
+            attending: form.get('attend') === 'yes' ? 'yes' : 'no',
+            count: Number(form.get('count')) || 0,
+            createdAt: new Date().toISOString(),
+          }, ...(data.rsvps || [])];
+          await writeJson(RSVPS, data);
+        }
+        res.writeHead(200, { 'content-type': 'text/plain' });
+        return res.end('ok');
+      }
+    }
     if (pathname === '/api/invite' || pathname.startsWith('/api/invite/')) {
       // legacy chungdoi endpoints: answer with a harmless empty payload
       return sendJson(res, 200, { comments: [] });
@@ -115,6 +166,8 @@ const server = http.createServer(async (req, res) => {
     // ---------- static ----------
     let filePath = pathname === '/' ? '/index.html' : pathname;
     if (pathname === '/i/batruong-thiduyen-cherish') filePath = '/index.html';
+    if (pathname === '/truongduyen' || pathname === '/truongduyen/') filePath = '/index.html';
+    else if (pathname.startsWith('/truongduyen/')) filePath = pathname.slice('/truongduyen'.length);
     const abs = path.join(ROOT, path.normalize(filePath).replace(/^([/\\])+/, ''));
     if (!abs.startsWith(ROOT)) { res.writeHead(403); return res.end('forbidden'); }
 
