@@ -24,6 +24,81 @@ function rewrite(html) {
   return out;
 }
 
+const FONT_STACK = 'Baskerville, &quot;Times New Roman&quot;, ChungDoiIndic, serif';
+
+function customizeInvitation(html) {
+  const $ = cheerio.load(html, null, false);
+
+  const rec = $('[data-landing-screenshot-id="invite-reception"]').first();
+  const hasText = (el, re) => re.test($(el).text());
+  const divs = () => rec.find('div');
+  const leafDivWithText = (re) => divs().filter((i, el) => hasText(el, re) && $(el).children().length === 0).first();
+
+  leafDivWithText(/^06:00$/).text('16:00');
+  rec.find('span').filter((i, el) => $(el).text().trim() === 'THỨ BẢY').first().text('THỨ SÁU');
+  rec.find('span')
+    .filter((i, el) => $(el).text().trim() === '28' && ($(el).attr('class') || '').includes('text-[32px]'))
+    .first().text('27');
+
+  const receptionGuests = divs().filter((i, el) => hasText(el, /Đón khách/i)).first();
+  if (receptionGuests.length) receptionGuests.remove();
+
+  const lunarNote = leafDivWithText(/Tức ngày/);
+  if (lunarNote.length) lunarNote.remove();
+
+  const countdown = divs().filter((i, el) => hasText(el, /Cùng\s+đếm\s+ngược/i)).first();
+
+  const ceremonyBlock = `
+  <div class="w-full flex flex-col items-center mt-7">
+    <div class="w-[68%] h-px mb-6" style="background:linear-gradient(to right,transparent,rgba(128,0,0,0.28),transparent)"></div>
+    <h3 class="text-[16px] md:text-[20px] text-center uppercase flex flex-col items-center" style="color: rgb(128, 0, 0); font-family: ${FONT_STACK};">
+      <span dir="auto">Lễ thành hôn diễn ra vào&nbsp;lúc:</span>
+    </h3>
+    <div class="text-[20px] md:text-[24px] font-semibold mt-2 text-center" style="color: rgb(128, 0, 0); font-family: ${FONT_STACK};">06:00</div>
+    <div class="flex items-center justify-center mt-5" style="color: rgb(102, 102, 102); font-family: ${FONT_STACK};">
+      <span class="text-[14px] md:text-[15px] w-[70px] md:w-[85px] uppercase whitespace-nowrap" style="color: rgb(102, 102, 102); font-family: ${FONT_STACK}; text-align: right;">THỨ BẢY</span>
+      <span class="w-[1px] h-[25px] self-center opacity-50 mx-3 md:mx-4" style="background-color: rgb(102, 102, 102);"></span>
+      <span class="text-[32px] md:text-[38px]" style="color: rgb(128, 0, 0); font-family: ${FONT_STACK};">28</span>
+      <span class="w-[1px] h-[25px] self-center opacity-50 mx-3 md:mx-4" style="background-color: rgb(102, 102, 102);"></span>
+      <span class="text-[14px] md:text-[15px] w-[70px] md:w-[85px] uppercase whitespace-nowrap" style="color: rgb(102, 102, 102); font-family: ${FONT_STACK}; text-align: left;">THÁNG 11</span>
+    </div>
+    <div class="text-[20px] md:text-[22px] mt-2 text-center" style="color: rgb(102, 102, 102); font-family: ${FONT_STACK};">2026</div>
+    <div class="text-[13px] md:text-[14px] text-center mt-2" style="color: rgb(102, 102, 102); font-family: ${FONT_STACK};">(Tức ngày 20 tháng 10 năm Bính&nbsp;Ngọ)</div>
+  </div>`;
+
+  if (countdown.length) countdown.before(ceremonyBlock);
+
+  const heartDate = rec.find('span')
+    .filter((i, el) => $(el).text().trim() === '28' && ($(el).attr('class') || '').includes('font-bold'))
+    .first();
+  if (heartDate.length) {
+    const heartCell = heartDate.parent().parent();
+    const day27 = divs()
+      .filter((i, el) => $(el).children().length === 1 && $(el).children().first().is('span') && $(el).text().trim() === '27')
+      .first();
+    if (day27.length) {
+      const clone = heartCell.clone();
+      clone.find('span').last().text('27');
+      day27.html(clone.html());
+    }
+  }
+
+  const addToCalendar = rec.find('a').filter((i, el) => hasText(el, /Thêm vào lịch/)).first();
+  if (addToCalendar.length) {
+    const params = new URLSearchParams({
+      action: 'TEMPLATE',
+      text: 'Tiệc cưới Đỗ Bá Trường & Nguyễn Thị Duyên',
+      dates: '20261127T090000Z/20261127T130000Z',
+      ctz: 'Asia/Bangkok',
+      details: 'Tiệc cưới của Đỗ Bá Trường & Nguyễn Thị Duyên tại Xóm ngọ thôn Đại vi xã Đại Đồng thành phố Bắc Ninh',
+      location: 'Xóm ngọ thôn Đại vi xã Đại Đồng thành phố Bắc Ninh',
+    });
+    addToCalendar.attr('href', 'https://www.google.com/calendar/render?' + params.toString());
+  }
+
+  return $.html();
+}
+
 // ---------- envelope (closed state, from the server rendered page) ----------
 const rawPage = fs.readFileSync(path.join(ROOT, 'tools/body.raw.html'), 'utf8');
 const $raw = cheerio.load(rawPage);
@@ -38,7 +113,7 @@ $dom('script').remove();
 
 const invitation = $dom('[data-video-invitation]').first();
 invitation.attr('id', 'invite-content');
-let invitationHtml = rewrite($dom.html(invitation));
+let invitationHtml = customizeInvitation(rewrite($dom.html(invitation)));
 
 // music toggle button (already part of the captured invitation DOM; only used
 // as a fallback if the capture ever stops including it)

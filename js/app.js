@@ -12,7 +12,7 @@
      Config
      --------------------------------------------------------- */
   var CONFIG = {
-    weddingDate: new Date('2026-11-28T06:00:00+07:00'),
+    weddingDate: new Date('2026-11-27T16:00:00+07:00'),
     musicStart: 31,
     musicEnd: 341,
     autoplayGallery: true,
