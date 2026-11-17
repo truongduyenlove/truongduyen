@@ -1,0 +1,42 @@
+<nav .fixed.bottom-0.left-0.right-0.bg-base-100/95.backdrop-blur-lg.border-t.border-base-300/50.pb-safe.z-50.lg:hidden.hidden>
+  <div .flex.justify-around.items-center.h-16.max-w-md.mx-auto>
+    <a #bottom-nav-templates .flex.flex-col.items-center.justify-center.flex-1.h-full.gap-1.transition-colors.text-base-content/40.active:text-base-content/60.>
+      <svg .w-6.h-6>
+    <span .text-[10px].font-medium>
+  <a #bottom-nav-dashboard .flex.flex-col.items-center.justify-center.flex-1.h-full.gap-1.transition-colors.text-base-content/40.active:text-base-content/60.hidden>
+    <svg .w-6.h-6>
+  <span .text-[10px].font-medium>
+<a #bottom-nav-guests .flex.flex-col.items-center.justify-center.flex-1.h-full.gap-1.transition-colors.text-base-content/40.active:text-base-content/60.hidden>
+  <svg .w-6.h-6>
+<span .text-[10px].font-medium>
+<div .contents>
+  <audio #yt-158e0d9e-b3c [display:none]>
+    <div #invite-envelope .jsx-353cb38c53e4a74a.fixed.inset-0.z-50.flex.items-center.justify-center.overflow-hidden [background:linear-gradient(to bottom right, #5a0000, #400000]>
+      <div .jsx-353cb38c53e4a74a.absolute.inset-0.pointer-events-none.overflow-hidden [z-index:1]>
+        <div .jsx-353cb38c53e4a74a.absolute [left:45.66125976620242%;top:auto;bottom:-30px;color:#FFD700;]>
+        <div .jsx-353cb38c53e4a74a.absolute [left:30.18014088505879%;top:auto;bottom:-30px;color:#FF6B6B;]>
+        <div .jsx-353cb38c53e4a74a.absolute [left:22.61428585043177%;top:auto;bottom:-30px;color:#FFC107;]>
+        <div .jsx-353cb38c53e4a74a.absolute [left:19.689215591643006%;top:auto;bottom:-30px;color:#FFE066]>
+        <div .jsx-353cb38c53e4a74a.absolute [left:7.598590226843953%;top:auto;bottom:-30px;color:#FFD700;]>
+        <div .jsx-353cb38c53e4a74a.absolute [left:50.432992081623524%;top:auto;bottom:-30px;color:#FF6B6B]>
+        <div .jsx-353cb38c53e4a74a.absolute [left:57.19531320268288%;top:auto;bottom:-30px;color:#FF6B6B;]>
+        <div .jsx-353cb38c53e4a74a.absolute [left:19.273439897224307%;top:auto;bottom:-30px;color:#FFD700]>
+        <div .jsx-353cb38c53e4a74a.absolute [left:22.71677655633539%;top:auto;bottom:-30px;color:#FF6B6B;]>
+        <div .jsx-353cb38c53e4a74a.absolute [left:67.38983522634953%;top:auto;bottom:-30px;color:#FF6B6B;]>
+        <div .jsx-353cb38c53e4a74a.absolute [left:30.316057929303497%;top:auto;bottom:-30px;color:#FF6B6B]>
+        <div .jsx-353cb38c53e4a74a.absolute [left:63.025164988357574%;top:auto;bottom:-30px;color:#FF6B6B]>
+      <div .jsx-353cb38c53e4a74a.relative [z-index:10]>
+        <div .jsx-353cb38c53e4a74a.relative.w-[310px].sm:w-[340px].md:w-[520px].lg:w-[600px]>
+          <div .jsx-353cb38c53e4a74a.absolute.left-1/2.rounded-full.flex.items-center.justify-center [top:50px;width:56px;height:56px;transform:translate(-50%, -5]>
+            <div .jsx-353cb38c53e4a74a.w-8.h-8 [background-color:#800000;opacity:0.9;-webkit-mask-image:url(]>
+          <div .jsx-353cb38c53e4a74a.relative.rounded-lg [box-shadow:0 25px 60px -12px rgba(0, 0, 0, 0.45), 0 8px 24px]>
+            <div .jsx-353cb38c53e4a74a.absolute.inset-0.rounded-lg.overflow-hidden [background:#800000;border:1px solid rgba(255, 238, 210, 0.15]>
+              <img .jsx-353cb38c53e4a74a.absolute.pointer-events-none.w-[220px].md:w-[300px].-top-[65px].-left-[124px].md:-top-[104px].md:-left-[130px].opacity-[0.15].rotate-[30deg].md:rotate-[30deg]>
+              <img .jsx-353cb38c53e4a74a.absolute.pointer-events-none.w-[220px].md:w-[300px].-bottom-[39px].-right-[156px].md:-bottom-[104px].md:-right-[143px].opacity-[0.15].-rotate-[-30deg].md:-rotate-[-30deg]>
+            <div .jsx-353cb38c53e4a74a.relative.z-10.text-center.px-6.pt-28.pb-14.md:pt-24.md:pb-8>
+              <h1 .jsx-353cb38c53e4a74a.mb-2.flex.flex-col.items-center.leading-tight.text-3xl.sm:text-4xl [color:#ffeed2;font-family:&quot;Playfair Display&quot;, &quo]>
+              <div .jsx-353cb38c53e4a74a.flex.items-center.justify-center.gap-3.mb-2>
+              <div .jsx-353cb38c53e4a74a.text-[18px].mb-5.flex.flex-col.items-center [color:rgba(255, 238, 210, 0.85);font-family:&quot;Lora&quot;]>
+              <div .jsx-353cb38c53e4a74a.mb-6.>
+              <a .jsx-353cb38c53e4a74a.relative.px-8.py-2.5.text-lg.font-semibold.sm:font-medium.rounded-full.shadow-lg.no-underline.cursor-pointer.flex.w-fit.items-center.justify-center.mx-auto.overflow-hidden [background-color:#ffeed2;color:#800000;box-shadow:0 4px 14px]>
+<script #_R_>

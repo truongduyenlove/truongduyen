@@ -1,0 +1,145 @@
+/* =========================================================
+   Local clone — small behavioural additions on top of the
+   original chungdoi CSS bundle. Nothing here changes the
+   look of the invitation itself.
+   ========================================================= */
+
+body.invite-locked {
+  overflow: hidden;
+  height: 100vh;
+  overscroll-behavior: none;
+}
+
+/* ---------- keyframes that the original app injects at runtime ---------- */
+@keyframes ambient-rise {
+  0% { transform: translateY(6vh) translateX(0px) rotate(0deg); opacity: 0; }
+  12% { opacity: 0.45; }
+  55% { transform: translatey(-42vh) translatex(var(--sway, 20px)) rotate(8deg); opacity: 0.55; }
+  92% { opacity: 0.35; }
+  100% { transform: translateY(-92vh) translateX(0px) rotate(0deg); opacity: 0; }
+}
+@keyframes ambient-fall {
+  0% { transform: translateY(-8vh) translateX(0px) rotate(0deg); opacity: 0; }
+  10% { opacity: 0.5; }
+  50% { transform: translatey(48vh) translatex(var(--sway, 20px)) rotate(180deg); opacity: 0.6; }
+  92% { opacity: 0.45; }
+  100% { transform: translateY(105vh) translateX(0px) rotate(360deg); opacity: 0; }
+}
+@keyframes seal-pulse {
+  0%, 100% { transform: translate(-50%, -50%) scale(1); box-shadow: 0 4px 20px var(--shadow-color); }
+  50% { transform: translate(-50%, -50%) scale(1.06); box-shadow: 0 6px 35px var(--shadow-color); }
+}
+@keyframes seal-break {
+  0% { transform: translate(-50%, -50%) scale(1) rotate(0deg); opacity: 1; filter: brightness(1); }
+  30% { transform: translate(-50%, -50%) scale(1.15) rotate(5deg); opacity: 0.9; filter: brightness(1.3); }
+  60% { transform: translate(-50%, -50%) scale(1.05) rotate(-3deg); opacity: 0.5; filter: brightness(1.5); }
+  100% { transform: translate(-50%, -50%) scale(0) rotate(15deg); opacity: 0; filter: brightness(2); }
+}
+@keyframes seal-ring {
+  0% { transform: translate(-50%, -50%) scale(0.8); opacity: 0.8; }
+  100% { transform: translate(-50%, -50%) scale(2.5); opacity: 0; }
+}
+@keyframes seal-flower-bloom {
+  0% { transform: scale(1) rotate(0deg); filter: brightness(1); }
+  45% { transform: scale(1.16) rotate(-3deg); filter: brightness(1.08); }
+  100% { transform: scale(1.06) rotate(0deg); filter: brightness(1.02); }
+}
+@keyframes shine {
+  0% { left: -100%; }
+  50%, 100% { left: 100%; }
+}
+@keyframes envelope-away {
+  0% { transform: translateY(0px) rotate(0deg); opacity: 1; }
+  15% { transform: translateY(10px) rotate(0.5deg); opacity: 1; }
+  100% { transform: translateY(-120vh) rotate(-2deg); opacity: 0; }
+}
+@keyframes particle-burst {
+  0% { opacity: 0; transform: translate(-50%, -50%) scale(0) rotate(0deg); }
+  15% { opacity: 1; transform: translate(-50%, -50%) scale(1.3) rotate(var(--rot-start, 15deg)); }
+  100% { opacity: 0; transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) scale(.6) rotate(var(--rot-end, 180deg)); }
+}
+@keyframes ienvFloat {
+  0%, 100% { translate: 0px; }
+  50% { translate: 0px -7px; }
+}
+@keyframes ienvFloatMain {
+  0%, 100% { translate: -15%; }
+  50% { translate: -15% -7px; }
+}
+@keyframes ienvShadowPulse {
+  0%, 100% { transform: scaleX(1); opacity: 0.28; }
+  50% { transform: scaleX(0.9); opacity: 0.16; }
+}
+@keyframes ienvSparkleAnim {
+  0%, 100% { opacity: 0; transform: scale(0.4); }
+  50% { opacity: 1; transform: scale(1.15); }
+}
+@keyframes ienvHintPulse {
+  0%, 100% { opacity: 0.45; }
+  50% { opacity: 1; }
+}
+@keyframes ienvGrow {
+  0% { transform: scale(1); }
+  100% { transform: scale(1.12); }
+}
+@keyframes ienvWave {
+  0% { transform: scale(1.12) rotate(0deg); }
+  20% { transform: scale(1.12) rotate(-6deg); }
+  40% { transform: scale(1.12) rotate(4.5deg); }
+  60% { transform: scale(1.12) rotate(-3deg); }
+  80% { transform: scale(1.12) rotate(1.5deg); }
+  100% { transform: scale(1.12) rotate(0deg); }
+}
+@keyframes ienvBackWave {
+  0%, 100% { rotate: 0deg; }
+  20% { rotate: -1deg; }
+  40% { rotate: 2deg; }
+  60% { rotate: -2.5deg; }
+  80% { rotate: 1.5deg; }
+}
+
+/* ---------- envelope exit ---------- */
+#invite-envelope .cd-envelope-card {
+  animation: envelope-away 850ms cubic-bezier(0.5, 0, 0.75, 0.35) forwards;
+}
+#invite-envelope .cd-particle {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  pointer-events: none;
+  z-index: 60;
+  animation: particle-burst 1000ms cubic-bezier(0.16, 0.84, 0.44, 1) forwards;
+  text-shadow: 0 0 18px currentColor;
+}
+#invite-envelope.is-leaving {
+  animation: cd-envelope-fade 300ms ease-out 560ms forwards;
+  pointer-events: none;
+}
+@keyframes cd-envelope-fade {
+  to { opacity: 0; }
+}
+
+/* ---------- dialogs ---------- */
+dialog.modal::backdrop {
+  background: rgba(0, 0, 0, 0.72);
+  backdrop-filter: blur(2px);
+}
+body:has(dialog.modal[open]) {
+  overflow: hidden;
+}
+
+/* ---------- misc ---------- */
+html,
+body {
+  overflow-x: hidden;
+  background: #fff7eb;
+}
+
+button[aria-label="Mở hộp mừng cưới"] {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* RSVP overlay entrance */
+[data-rsvp-overlay] > div {
+  will-change: transform, opacity;
+}

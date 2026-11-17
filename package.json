@@ -1,0 +1,19 @@
+{
+  "name": "thiep-cuoi-truong-duyen",
+  "version": "1.0.0",
+  "description": "Local clone of chungdoi.com/i/batruong-thiduyen-cherish",
+  "main": "index.js",
+  "scripts": {
+    "start": "node server.mjs",
+    "build": "node tools/build-html.mjs"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "devDependencies": {
+    "cheerio": "^1.2.0",
+    "playwright": "^1.65.1"
+  },
+  "private": true
+}
