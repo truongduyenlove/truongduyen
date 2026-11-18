@@ -88,8 +88,9 @@ await page.waitForTimeout(200);
 const submitSelector = 'body > div.fixed.inset-0 button[type="submit"]';
 ok(!(await page.locator(submitSelector).last().isDisabled()), 'rsvp submit enabled after filling');
 await page.locator(submitSelector).last().click();
-await page.waitForTimeout(1200);
-ok(await page.locator('h2', { hasText: 'Cảm ơn bạn!' }).count() > 0, 'rsvp success state');
+const rsvpDone = await page.locator('h2', { hasText: 'Cảm ơn bạn!' }).first()
+  .waitFor({ timeout: 15000 }).then(() => true).catch(() => false);
+ok(rsvpDone, 'rsvp success state');
 await page.keyboard.press('Escape');
 await page.waitForTimeout(400);
 

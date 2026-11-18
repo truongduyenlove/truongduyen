@@ -16,7 +16,7 @@
     musicStart: 31,
     musicEnd: 341,
     autoplayGallery: true,
-    galleryInterval: 4000
+    galleryInterval: 2800
   };
 
   /* ---------------------------------------------------------
@@ -209,6 +209,7 @@
         envelope.style.display = 'none';
         document.body.classList.remove('invite-locked');
         window.scrollTo(0, 0);
+        enableAutoScroll();
       }, 900);
     } else {
       document.body.classList.remove('invite-locked');
@@ -231,9 +232,94 @@
       if (envelope) { envelope.style.display = 'none'; }
       document.body.classList.remove('invite-locked');
       opened = true;
-      setTimeout(playMusic, 300);
+      setTimeout(function () { playMusic(); enableAutoScroll(); }, 300);
     }
   } catch (e) {}
+
+  /* ---------------------------------------------------------
+     Slow auto scroll (drifts down, pauses on touch, resumes)
+     --------------------------------------------------------- */
+  var autoScroll = { started: false, running: false, rafId: 0, lastTs: 0, acc: 0, resumeTimer: 0 };
+
+  function scrollLimit() {
+    return Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
+  }
+
+  function autoScrollStop() {
+    autoScroll.running = false;
+    if (autoScroll.rafId) cancelAnimationFrame(autoScroll.rafId);
+    autoScroll.rafId = 0;
+    autoScroll.lastTs = 0;
+  }
+
+  function autoScrollBlocked() {
+    return document.body.classList.contains('modal-open') || !!document.querySelector('dialog.modal[open]');
+  }
+
+  function autoScrollTick(ts) {
+    if (!autoScroll.running) return;
+    if (!autoScroll.lastTs) autoScroll.lastTs = ts;
+    var dt = Math.min(0.08, (ts - autoScroll.lastTs) / 1000);
+    autoScroll.lastTs = ts;
+
+    if (!autoScrollBlocked()) {
+      var speed = Math.max(28, Math.min(90, window.innerHeight * 0.07));
+      autoScroll.acc += speed * dt;
+      var step = Math.floor(autoScroll.acc);
+      if (step > 0) {
+        autoScroll.acc -= step;
+        var max = scrollLimit();
+        var next = window.scrollY + step;
+        if (next >= max) {
+          window.scrollTo(0, max);
+          autoScrollStop();
+          return;
+        }
+        window.scrollTo(0, next);
+      }
+    }
+
+    autoScroll.rafId = requestAnimationFrame(autoScrollTick);
+  }
+
+  function autoScrollStart() {
+    if (!autoScroll.started || autoScroll.running) return;
+    if (window.scrollY >= scrollLimit() - 4) return;
+    autoScroll.running = true;
+    autoScroll.lastTs = 0;
+    autoScroll.rafId = requestAnimationFrame(autoScrollTick);
+  }
+
+  function autoScrollHold() {
+    if (!autoScroll.started) return;
+    clearTimeout(autoScroll.resumeTimer);
+    autoScrollStop();
+  }
+
+  function autoScrollResumeSoon() {
+    if (!autoScroll.started) return;
+    clearTimeout(autoScroll.resumeTimer);
+    autoScroll.resumeTimer = setTimeout(autoScrollStart, 1400);
+  }
+
+  function enableAutoScroll() {
+    if (autoScroll.started) return;
+    autoScroll.started = true;
+    autoScrollResumeSoon();
+  }
+
+  ['touchstart', 'mousedown', 'wheel'].forEach(function (evt) {
+    window.addEventListener(evt, autoScrollHold, { passive: true, capture: true });
+  });
+  ['touchend', 'touchcancel', 'mouseup'].forEach(function (evt) {
+    window.addEventListener(evt, autoScrollResumeSoon, { passive: true, capture: true });
+  });
+  window.addEventListener('keydown', function (e) {
+    if (/^(Arrow|Page|Home|End| )/.test(e.key)) autoScrollHold();
+  });
+  window.addEventListener('keyup', function (e) {
+    if (/^(Arrow|Page|Home|End| )/.test(e.key)) autoScrollResumeSoon();
+  });
 
   /* ---------------------------------------------------------
      Countdown
@@ -292,7 +378,7 @@
       if (d < -n / 2) d += n;
       var t = cardTransform(d);
       var card = cards[i];
-      card.style.transitionDuration = '1100ms';
+      card.style.transitionDuration = '700ms';
       card.style.transform = t.transform;
       card.style.opacity = String(t.opacity);
       card.style.zIndex = String(t.zIndex);
@@ -505,6 +591,7 @@
     rsvpOverlay = null;
     setTimeout(function () { el.remove(); }, 220);
     document.body.style.overflow = '';
+    document.body.classList.remove('modal-open');
   }
 
   function mountRsvp() {
@@ -513,6 +600,7 @@
     var overlay = node.firstElementChild;
     document.body.appendChild(node);
     rsvpOverlay = overlay;
+    document.body.classList.add('modal-open');
     overlay.addEventListener('click', function (e) { if (e.target === overlay) closeRsvp(); });
     var closeBtn = $('button[aria-label="Đóng"]', overlay);
     if (closeBtn) closeBtn.addEventListener('click', closeRsvp);

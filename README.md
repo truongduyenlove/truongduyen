@@ -65,7 +65,8 @@ Khi `appScriptUrl` để trống, site tự dùng API local (`data/*.json`) — 
 | Ảnh bìa, thông tin lễ cưới, gia đình hai bên | Có |
 | Tiệc cưới 16:00 thứ Sáu 27/11 + Lễ thành hôn 06:00 thứ Bảy 28/11 | Có |
 | Đếm ngược + lịch tháng 11/2026 (đánh dấu 27 & 28) + "Thêm vào lịch" | Có |
-| Album 17 ảnh: carousel 3D, tự chuyển, vuốt, lightbox, thumbnail | Có |
+| Album 17 ảnh: carousel 3D, tự chuyển (2,8s), vuốt, lightbox, thumbnail | Có |
+| Tự trôi trang sau khi mở thiệp (chạm để dừng, thả ~1,4s trôi tiếp) | Có |
 | Đăng ký tham dự (RSVP) + số người | Có — lưu Google Sheet, đọc lại bằng JSONP |
 | Sổ lưu bút | Có — lưu Google Sheet, tự làm mới mỗi 45s |
 | Hộp quà mừng + QR Techcombank/Vietcombank + "Lưu QR" | Có (QR local) |
