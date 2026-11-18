@@ -121,7 +121,23 @@ const rawPage = fs.readFileSync(path.join(ROOT, 'tools/body.raw.html'), 'utf8');
 const $raw = cheerio.load(rawPage);
 const envelope = $raw('[data-landing-screenshot-id="invite-envelope"]').first();
 envelope.attr('id', 'invite-envelope');
-let envelopeHtml = rewrite($raw.html(envelope));
+const envelopeBase = rewrite($raw.html(envelope));
+
+function envelopeFor(side) {
+  if (side !== 'bride') return envelopeBase;
+  const $e = cheerio.load(envelopeBase, null, false);
+  const h1 = $e('h1').first();
+  const nameSpans = h1.children('span').filter((i, el) => {
+    const text = $e(el).text().trim();
+    return text === 'Đỗ Trường' || text === 'Nguyễn Duyên';
+  });
+  const first = nameSpans.first();
+  const last = nameSpans.last();
+  const firstText = first.text();
+  first.text(last.text());
+  last.text(firstText);
+  return $e.html();
+}
 
 // ---------- opened invitation (captured after clicking "Mở thiệp") ----------
 const domFragment = fs.readFileSync(path.join(ROOT, 'reference/mobile-dom.html'), 'utf8');
@@ -163,6 +179,8 @@ const SITES = [
 
 function renderPage(invitationHtml, opts) {
   const baseTag = opts.baseHref ? `<base href="${opts.baseHref}">\n` : '';
+  const envelopeHtml = envelopeFor(opts.side);
+  const coupleTitle = opts.side === 'bride' ? 'Nguyễn Duyên &amp; Đỗ Trường' : 'Đỗ Trường &amp; Nguyễn Duyên';
   const description = `Thân mời quý khách đến dự lễ cưới của Đỗ Trường &amp; Nguyễn Duyên | Tiệc cưới 16:00 thứ Sáu 27/11/2026, Lễ thành hôn 06:00 thứ Bảy 28/11/2026 | ${opts.venue}`;
   return `<!DOCTYPE html>
 <html lang="vi" dir="ltr" data-theme="halloween">
@@ -170,9 +188,9 @@ function renderPage(invitationHtml, opts) {
 <meta charset="utf-8">
 ${baseTag}<meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#800000">
-<title>Đỗ Trường &amp; Nguyễn Duyên | Thiệp cưới</title>
+<title>${coupleTitle} | Thiệp cưới</title>
 <meta name="description" content="${description}">
-<meta property="og:title" content="Đỗ Trường &amp; Nguyễn Duyên">
+<meta property="og:title" content="${coupleTitle}">
 <meta property="og:description" content="${description}">
 <meta property="og:type" content="website">
 <meta property="og:image" content="/images/themes/song-hy-red/chu-hy.webp">
@@ -220,4 +238,4 @@ for (const site of SITES) {
   fs.writeFileSync(out, html, 'utf8');
   console.log('written', site.outFile, html.length);
 }
-console.log('envelope', envelopeHtml.length, 'music', musicHtml.length);
+console.log('envelope', envelopeBase.length, 'music', musicHtml.length);
