@@ -23,7 +23,12 @@
      Google Apps Script bridge (guestbook + RSVP)
      --------------------------------------------------------- */
   var APP_SCRIPT_URL = String((window.WEDDING_CONFIG || {}).appScriptUrl || '').trim();
+  var IS_LOCAL_HOST = /^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname);
   var WISH_CACHE_KEY = 'td-wishes-v1';
+
+  function endpointMissing() {
+    return !APP_SCRIPT_URL && !IS_LOCAL_HOST;
+  }
 
   function postToAppScript(payload) {
     var body = new URLSearchParams();
@@ -592,7 +597,7 @@
         }).catch(function () {
           submit.disabled = false;
           submit.textContent = prevLabel;
-          toast('Không gửi được xác nhận. Vui lòng thử lại.', 'error');
+          toast(endpointMissing() ? 'Chưa cấu hình Google Sheet (js/config.js).' : 'Không gửi được xác nhận. Vui lòng thử lại.', 'error');
         });
       });
     }
@@ -648,6 +653,10 @@
   function loadComments() {
     if (!gbList) return;
     if (!APP_SCRIPT_URL) {
+      if (endpointMissing()) {
+        gbList.innerHTML = '<p class="text-center text-sm opacity-70 flex flex-col items-center"><span dir="auto">Sổ lưu bút chưa được cấu hình Google Sheet.</span></p>';
+        return;
+      }
       fetch('/api/comments').then(function (r) { return r.json(); }).then(function (data) {
         renderComments((data && data.comments) || []);
       }).catch(function () { renderComments([]); });
@@ -721,7 +730,7 @@
         toast('Đã gửi lời chúc, cảm ơn bạn!');
         loadComments();
       }).catch(function () {
-        toast('Không gửi được lời chúc. Vui lòng thử lại.', 'error');
+        toast(endpointMissing() ? 'Chưa cấu hình Google Sheet (js/config.js).' : 'Không gửi được lời chúc. Vui lòng thử lại.', 'error');
       }).finally(function () {
         gbSubmit.disabled = false;
       });
