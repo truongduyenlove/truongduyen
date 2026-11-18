@@ -26,7 +26,7 @@ function rewrite(html) {
 
 const FONT_STACK = 'Baskerville, &quot;Times New Roman&quot;, ChungDoiIndic, serif';
 
-function customizeInvitation(html) {
+function customizeInvitation(html, opts) {
   const $ = cheerio.load(html, null, false);
 
   const rec = $('[data-landing-screenshot-id="invite-reception"]').first();
@@ -96,6 +96,23 @@ function customizeInvitation(html) {
     addToCalendar.attr('href', 'https://www.google.com/calendar/render?' + params.toString());
   }
 
+  $('[class*="grid-cols-[1fr_auto_1fr]"]')
+    .find('div[class*="whitespace-pre-line"]')
+    .remove();
+
+  const giftDialog = $('button[aria-label="Mở hộp mừng cưới"]').first().parent().find('dialog').first();
+  giftDialog.find('h3').each((i, el) => {
+    const isBride = /^Cô Dâu/i.test($(el).text().trim());
+    if ((opts.side === 'groom' && isBride) || (opts.side === 'bride' && !isBride)) {
+      $(el).parent().remove();
+    }
+  });
+
+  const mapSection = $('[data-landing-screenshot-id="invite-map"]').first();
+  mapSection.find('div[class*="whitespace-pre-line"] span[dir="auto"]').first().text(opts.venue);
+  mapSection.find('iframe').attr('src', opts.mapSrc);
+  mapSection.find('a[href*="maps/dir"]').attr('href', opts.directionsHref);
+
   return $.html();
 }
 
@@ -113,28 +130,50 @@ $dom('script').remove();
 
 const invitation = $dom('[data-video-invitation]').first();
 invitation.attr('id', 'invite-content');
-let invitationHtml = customizeInvitation(rewrite($dom.html(invitation)));
+const baseInvitationHtml = rewrite($dom.html(invitation));
 
 // music toggle button (already part of the captured invitation DOM; only used
 // as a fallback if the capture ever stops including it)
 const musicWrap = $dom('button[aria-label*="nhạc"]').first().parent();
-const musicInInvitation = invitationHtml.indexOf('fixed bottom-14 right-4') !== -1;
+const musicInInvitation = baseInvitationHtml.indexOf('fixed bottom-14 right-4') !== -1;
 let musicHtml = musicInInvitation ? '' : rewrite($dom.html(musicWrap));
 
 // rsvp overlay template
 const rsvp = fs.readFileSync(path.join(ROOT, 'reference/rsvp-overlay.html'), 'utf8');
 const rsvpHtml = rewrite(rsvp);
 
-const page = `<!DOCTYPE html>
+const SITES = [
+  {
+    side: 'groom',
+    outFile: 'index.html',
+    baseHref: '',
+    venue: 'Xóm ngọ thôn Đại vi xã Đại Đồng thành phố Bắc Ninh',
+    mapSrc: 'https://maps.google.com/maps?q=21.087579,105.997287&z=16&hl=vi&output=embed',
+    directionsHref: 'https://www.google.com/maps/dir/?api=1&destination=21.087579,105.997287',
+  },
+  {
+    side: 'bride',
+    outFile: 'co-dau/index.html',
+    baseHref: '../',
+    venue: 'Xóm 6 thôn Rền xã Phật Tích thành phố Bắc Ninh',
+    mapSrc: 'https://maps.google.com/maps?q=21.07691,106.03352&z=16&hl=vi&output=embed',
+    directionsHref: 'https://www.google.com/maps/dir/?api=1&destination=21.07691,106.03352',
+  },
+];
+
+function renderPage(invitationHtml, opts) {
+  const baseTag = opts.baseHref ? `<base href="${opts.baseHref}">\n` : '';
+  const description = `Thân mời quý khách đến dự lễ cưới của Đỗ Trường &amp; Nguyễn Duyên | Tiệc cưới 16:00 thứ Sáu 27/11/2026, Lễ thành hôn 06:00 thứ Bảy 28/11/2026 | ${opts.venue}`;
+  return `<!DOCTYPE html>
 <html lang="vi" dir="ltr" data-theme="halloween">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+${baseTag}<meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#800000">
 <title>Đỗ Trường &amp; Nguyễn Duyên | Thiệp cưới</title>
-<meta name="description" content="Thân mời quý khách đến dự lễ cưới của Đỗ Trường &amp; Nguyễn Duyên | Thứ Bảy, 28 tháng 11, 2026 | Xóm ngọ thôn Đại vi xã Đại Đồng thành phố Bắc Ninh">
+<meta name="description" content="${description}">
 <meta property="og:title" content="Đỗ Trường &amp; Nguyễn Duyên">
-<meta property="og:description" content="Thân mời quý khách đến dự lễ cưới của Đỗ Trường &amp; Nguyễn Duyên | Thứ Bảy, 28 tháng 11, 2026">
+<meta property="og:description" content="${description}">
 <meta property="og:type" content="website">
 <meta property="og:image" content="/images/themes/song-hy-red/chu-hy.webp">
 <link rel="preload" href="/fonts/PlayfairDisplay-Variable.ttf" as="font" crossorigin type="font/ttf">
@@ -165,6 +204,7 @@ ${musicHtml}
 </body>
 </html>
 `;
+}
 
 function relativize(html) {
   return html
@@ -172,6 +212,12 @@ function relativize(html) {
     .replace(/url\((['"]?)\/(?!\/)/g, 'url($1');
 }
 
-fs.writeFileSync(path.join(ROOT, 'index.html'), relativize(page), 'utf8');
-console.log('index.html written', page.length);
-console.log('envelope', envelopeHtml.length, 'invitation', invitationHtml.length, 'music', musicHtml.length);
+for (const site of SITES) {
+  const invitationHtml = customizeInvitation(baseInvitationHtml, site);
+  const html = relativize(renderPage(invitationHtml, site));
+  const out = path.join(ROOT, site.outFile);
+  fs.mkdirSync(path.dirname(out), { recursive: true });
+  fs.writeFileSync(out, html, 'utf8');
+  console.log('written', site.outFile, html.length);
+}
+console.log('envelope', envelopeHtml.length, 'music', musicHtml.length);

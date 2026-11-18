@@ -5,6 +5,15 @@ Bản dựng lại (clone) của `https://chungdoi.com/i/batruong-thiduyen-cheri
 - Repo: <https://github.com/truongduyenlove/truongduyen>
 - Google Sheet: <https://docs.google.com/spreadsheets/d/1718q2_v_1hXQL4ZQCVsnswZZqKiYFrPuVWQJ3eM_xVQ/edit>
 
+## Hai phiên bản
+
+| Bản | Địa chỉ | Link |
+|---|---|---|
+| Nhà trai (chú rể) | Xóm ngọ thôn Đại vi xã Đại Đồng, TP Bắc Ninh | `/` → <https://truongduyenlove.github.io/truongduyen/> |
+| Nhà gái (cô dâu) | Xóm 6 thôn Rền xã Phật Tích, TP Bắc Ninh | `/co-dau/` → <https://truongduyenlove.github.io/truongduyen/co-dau/> |
+
+Khác nhau: địa chỉ + bản đồ tiệc cưới, và mã QR trong hộp quà mừng (bản nhà trai chỉ có QR chú rể, bản nhà gái chỉ có QR cô dâu). Mọi thứ còn lại giống nhau, dùng chung một Google Sheet.
+
 ## Chạy local
 
 ```bash

@@ -168,10 +168,14 @@ const server = http.createServer(async (req, res) => {
     if (pathname === '/i/batruong-thiduyen-cherish') filePath = '/index.html';
     if (pathname === '/truongduyen' || pathname === '/truongduyen/') filePath = '/index.html';
     else if (pathname.startsWith('/truongduyen/')) filePath = pathname.slice('/truongduyen'.length);
-    const abs = path.join(ROOT, path.normalize(filePath).replace(/^([/\\])+/, ''));
+    let abs = path.join(ROOT, path.normalize(filePath).replace(/^([/\\])+/, ''));
     if (!abs.startsWith(ROOT)) { res.writeHead(403); return res.end('forbidden'); }
 
-    const stat = await fsp.stat(abs).catch(() => null);
+    let stat = await fsp.stat(abs).catch(() => null);
+    if (stat && stat.isDirectory()) {
+      abs = path.join(abs, 'index.html');
+      stat = await fsp.stat(abs).catch(() => null);
+    }
     if (!stat || stat.isDirectory()) { res.writeHead(404); return res.end('not found'); }
 
     const ext = path.extname(abs).toLowerCase();
