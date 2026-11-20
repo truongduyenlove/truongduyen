@@ -101,12 +101,16 @@ function customizeInvitation(html, opts) {
     .remove();
 
   const giftDialog = $('button[aria-label="Mở hộp mừng cưới"]').first().parent().find('dialog').first();
-  giftDialog.find('h3').each((i, el) => {
-    const isBride = /^Cô Dâu/i.test($(el).text().trim());
-    if ((opts.side === 'groom' && isBride) || (opts.side === 'bride' && !isBride)) {
-      $(el).parent().remove();
-    }
-  });
+  if (opts.hideGift) {
+    $('button[aria-label="Mở hộp mừng cưới"]').first().parent().remove();
+  } else {
+    giftDialog.find('h3').each((i, el) => {
+      const isBride = /^Cô Dâu/i.test($(el).text().trim());
+      if ((opts.side === 'groom' && isBride) || (opts.side === 'bride' && !isBride)) {
+        $(el).parent().remove();
+      }
+    });
+  }
 
   const mapSection = $('[data-landing-screenshot-id="invite-map"]').first();
   mapSection.find('div[class*="whitespace-pre-line"] span[dir="auto"]').first().text(opts.venue);
@@ -174,6 +178,15 @@ const SITES = [
     venue: 'Xóm 6 thôn Rền xã Phật Tích thành phố Bắc Ninh',
     mapSrc: 'https://maps.google.com/maps?q=21.07691,106.03352&z=16&hl=vi&output=embed',
     directionsHref: 'https://www.google.com/maps/dir/?api=1&destination=21.07691,106.03352',
+  },
+  {
+    side: 'groom',
+    outFile: 'khong-qr/index.html',
+    baseHref: '../',
+    venue: 'Xóm ngọ thôn Đại vi xã Đại Đồng thành phố Bắc Ninh',
+    mapSrc: 'https://maps.google.com/maps?q=21.087579,105.997287&z=16&hl=vi&output=embed',
+    directionsHref: 'https://www.google.com/maps/dir/?api=1&destination=21.087579,105.997287',
+    hideGift: true,
   },
 ];
 

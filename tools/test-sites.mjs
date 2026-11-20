@@ -4,7 +4,7 @@ const browser = await chromium.launch({ channel: 'chrome', headless: true });
 const fail = [];
 const ok = (cond, label) => { console.log((cond ? 'PASS ' : 'FAIL ') + label); if (!cond) fail.push(label); };
 
-async function check(url, label, expectVenue, shot) {
+async function check(url, label, expectVenue, shot, expectGift = 1) {
   const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, locale: 'vi-VN' });
   const page = await ctx.newPage();
   const errs = [];
@@ -16,6 +16,7 @@ async function check(url, label, expectVenue, shot) {
   ok(await page.locator('#invite-envelope').isVisible(), `${label}: envelope`);
   await page.locator('#invite-envelope .relative.rounded-lg').click();
   await page.waitForTimeout(1800);
+  await page.evaluate(() => window.dispatchEvent(new Event('touchstart', { bubbles: true })));
 
   await page.evaluate(async () => {
     document.querySelectorAll('img').forEach(i => { i.loading = 'eager'; });
@@ -35,15 +36,20 @@ async function check(url, label, expectVenue, shot) {
   const familyAddr = await page.locator('[class*="grid-cols-[1fr_auto_1fr]"] div[class*="whitespace-pre-line"]').count();
   ok(familyAddr === 0, `${label}: family addresses removed`);
 
-  await page.locator('button[aria-label="Mở hộp mừng cưới"]').scrollIntoViewIfNeeded();
-  await page.waitForTimeout(300);
-  await page.locator('button[aria-label="Mở hộp mừng cưới"]').click();
-  await page.waitForTimeout(800);
-  const giftTitles = await page.evaluate(() => {
-    const d = [...document.querySelectorAll('dialog')].find(x => x.open);
-    return d ? [...d.querySelectorAll('h3')].map(h => h.innerText.trim()) : [];
-  });
-  ok(giftTitles.length === 1, `${label}: one QR block -> ${giftTitles.join(' | ')}`);
+  if (expectGift === 0) {
+    const giftCount = await page.locator('button[aria-label="Mở hộp mừng cưới"]').count();
+    ok(giftCount === 0, `${label}: gift section removed`);
+  } else {
+    await page.locator('button[aria-label="Mở hộp mừng cưới"]').scrollIntoViewIfNeeded();
+    await page.waitForTimeout(300);
+    await page.locator('button[aria-label="Mở hộp mừng cưới"]').click();
+    await page.waitForTimeout(800);
+    const giftTitles = await page.evaluate(() => {
+      const d = [...document.querySelectorAll('dialog')].find(x => x.open);
+      return d ? [...d.querySelectorAll('h3')].map(h => h.innerText.trim()) : [];
+    });
+    ok(giftTitles.length === 1, `${label}: one QR block -> ${giftTitles.join(' | ')}`);
+  }
   await shot(page);
   await page.keyboard.press('Escape');
 
@@ -61,7 +67,10 @@ await check('http://localhost:4321/truongduyen/co-dau/', 'BRIDE subpath', 'Xóm 
   await page.locator('[data-landing-screenshot-id="invite-map"]').scrollIntoViewIfNeeded();
   await page.waitForTimeout(2500);
   await page.locator('[data-landing-screenshot-id="invite-map"]').screenshot({ path: 'qa/bride-map.png' });
-});
+}, 1);
+await check('http://localhost:4321/truongduyen/khong-qr/', 'NO-QR subpath', 'Xóm ngọ thôn Đại vi xã Đại Đồng thành phố Bắc Ninh', async (page) => {
+  await page.screenshot({ path: 'qa/no-qr.png', fullPage: true });
+}, 0);
 
 await browser.close();
 console.log(fail.length ? `\n${fail.length} FAILED` : '\nALL PASS');

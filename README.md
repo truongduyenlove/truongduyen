@@ -11,8 +11,9 @@ Bản dựng lại (clone) của `https://chungdoi.com/i/batruong-thiduyen-cheri
 |---|---|---|
 | Nhà trai (chú rể) | Xóm ngọ thôn Đại vi xã Đại Đồng, TP Bắc Ninh | `/` → <https://truongduyenlove.github.io/truongduyen/> |
 | Nhà gái (cô dâu) | Xóm 6 thôn Rền xã Phật Tích, TP Bắc Ninh | `/co-dau/` → <https://truongduyenlove.github.io/truongduyen/co-dau/> |
+| Nhà trai — không có mã QR | Xóm ngọ thôn Đại vi xã Đại Đồng, TP Bắc Ninh | `/khong-qr/` → <https://truongduyenlove.github.io/truongduyen/khong-qr/> |
 
-Khác nhau: địa chỉ + bản đồ tiệc cưới, và mã QR trong hộp quà mừng (bản nhà trai chỉ có QR chú rể, bản nhà gái chỉ có QR cô dâu). Mọi thứ còn lại giống nhau, dùng chung một Google Sheet.
+Khác nhau: địa chỉ + bản đồ tiệc cưới, mã QR trong hộp quà mừng (bản nhà trai chỉ có QR chú rể, bản nhà gái chỉ có QR cô dâu, bản `/khong-qr/` bỏ hẳn mục Hộp quà mừng). Mọi thứ còn lại giống nhau, dùng chung một Google Sheet.
 
 ## Chạy local
 
